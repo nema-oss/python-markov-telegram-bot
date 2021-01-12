@@ -1,6 +1,6 @@
 # A simple Telegram bot that learns from messages of users it chats with and replies; the messages it sends are generated through functions that use Markov chains, old messages the bot has received (they can be either completely 
 # random or context-related) or a composition of messages that are linked in a semi-random manner from one or more files.
-# The functions are completely customizable with little impact to the main
+# The functions are completely customizable with little impact on the main
 # This bot requires to be in a folder with a text file named MAINTEXTFILE and one named SECONDARYTEXTFILE else it will create such files. If you don't need a secondary text file, you can remove the function getphrase5() and getphrase6()
 
 BOTNAME = "name" #fill this with the name of the bot so that if someone mentions it will automatically reply
@@ -74,7 +74,7 @@ def getphrase3(frase):
 		s=text_model.make_sentence(tries=100)
 	return s
 
-# chooses a random word in the message and searches for that word in random messages in the text file until it finds a message containing that word	then returns that message as a string
+# chooses a random word in the message and searches for that word in random messages in the text file until it finds a message containing that word; then returns that message as a string
 def getphrase4(mess):
 	datamess = mess.split()
 	j=len(datamess)
@@ -92,7 +92,7 @@ def getphrase4(mess):
 	f.close()
 	return (lines[hi])
 
-# returns a string generated throught the markovify method combine which combines two messages; the latters are generated through the markovify method Text applied to each text file
+# returns a string generated through the markovify method combine which combines two messages; the latter are generated through the markovify method Text applied to each text file
 def getphrase5():
 	with open(MAINTEXTFILE) as f:
 		texta = f.read()
@@ -106,7 +106,7 @@ def getphrase5():
 	
 	return s
 
-# same as getphrase5() but the method NewlineText is applied instead
+# same as getphrase5() but the NewlineText method is applied instead
 def getphrase6():
 	with open(MAINTEXTFILE) as f:
 		texta = f.read()
