@@ -150,10 +150,10 @@ def resp(bot, g):
 				stat=meme(frase)
 				if stat!="0":
 					update.message.reply_text(stat)
-			if op == 1 and frase and g!=0: # choosing the function to call to generate a reply. "1" is an arbitrary value, however it needs to be <= than RATE
+			if op == 1 and frase and g!=0: # choosing whether to reply or not. "1" is an arbitrary value, however it needs to be <= than RATE
 				sleep(1.5)
 								
-				gf=randint(1, 6)
+				gf=randint(1, 6) # choosing which function to call to generate a reply
 				if gf==1:
 					r=getphrase1(frase)
 				elif gf==2:
