@@ -131,9 +131,10 @@ def resp(bot, messageCounter):
 			
 			receivedMessage = update.message.text
 
-			if isinstance(receivedMessage, str) and BOTNAME in receivedMessage.lower(): 
-				isReply = 1
+			if isinstance(receivedMessage, str):
 				print(update.message.from_user.username)
+				if BOTNAME in receivedMessage.lower(): 
+					isReply = 1
 			f = open(MAINTEXTFILE, "a")
 			
 			if receivedMessage:
