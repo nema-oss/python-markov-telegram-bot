@@ -1,6 +1,6 @@
 # A simple, ready-to-go *Telegram* bot in Python.
 
-![](fantuzzo_logo.svg)
+![](logo.svg)
 
 The bot learns from messages of users it chats with and replies to them.
 
