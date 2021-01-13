@@ -6,7 +6,7 @@
 BOTNAME = "name" #fill this with the name of the bot so that if someone mentions it will automatically reply
 RATE = 4 # rate at which the bot replies: 1 reply every 1 / (RATE * receivedMessages)
 MAINTEXTFILE = "main.txt"#name of the main text file
-SECONDARYTEXTFILE = "secondary.txt" #name of the secondary text file
+SECONDARYTEXTFILE = "secondary.txt" #name of the secondary text file; code will never fill this file, you have to do it manually
 TOKEN = 'T0K3N' # pretty self explanatory but remember to put your token here
 
 from telegram.ext import (MessageHandler, Filters, Updater, CommandHandler)
@@ -21,23 +21,18 @@ from io import open
 from array import array
 import markovify
 
-# checks if the message ends with "cia", "6", "ma" or "mo" and returns an arbitrary string. You can either delete this and its call in resp or delete everything but res="0" 
+# checks if the message ends with "cia", "6", "ma" or "mo" and returns an arbitrary string. You can either delete this and its call in resp or delete everything but return "0" 
 def meme(frase):
 	dim=len(frase)
-	res="0"
 	if (frase[dim-1]=='a' and frase [dim-2]=='i' and frase[dim-3]=='c'):
-		res="ciai la faccia da pirla"
-		return res
+		return "ciai la faccia da pirla"
 	elif(frase[dim-1]=='6'):
-		res="6 scemo"
-		return res
+		return "6 scemo"
 	elif(frase[dim-1]=='a' and frase[dim-2]=='m'):
-		res="ma tu sorella"
-		return res
-	elif (frase[dim - 1] == 'o' and frase[dim - 2] == 'm'):
-		res = "mortacci tua"
-		return res
-	return res
+		return "ma tu sorella"
+	elif (frase[dim - 1] == 'o' and frase[dim - 2] == 'm'): 
+		return "mortacci tua"
+	return "0"
 
 # returns a string generated through the markovify method NewlineText
 def getphrase1(frase):
@@ -55,12 +50,12 @@ def getphrase1(frase):
 def getphrase2():
 	f = open(MAINTEXTFILE, "r")
 	lines=f.readlines()
-	i=0
+	numberOfLines=0
 	for x in lines:
-		i=i+1
-	hi =randint(0, i-1)
+		numberOfLines=numberOfLines+1
+	randomIndex =randint(0, i-1)
 	f.close()
-	return (lines[hi])
+	return (lines[randomIndex])
 
 # returns a string generated through the markovify method Text
 def getphrase3(frase):
@@ -77,20 +72,20 @@ def getphrase3(frase):
 # chooses a random word in the message and searches for that word in random messages in the text file until it finds a message containing that word; then returns that message as a string
 def getphrase4(mess):
 	datamess = mess.split()
-	j=len(datamess)
-	index = randint(0, j-1)
-	parola = datamess[index]
+	messageLength=len(datamess)
+	index = randint(0, messageLength-1)
+	word = datamess[index]
 	f = open(MAINTEXTFILE, "r")
 	lines=f.readlines()
 	i=0
 	for x in lines:
-		i=i+1
-	for x in range (0, 100):
-		hi =randint(0, i-1)
-		if parola in lines[hi]:
+		numberOfLines=numberOfLines+1
+	for x in range (0, 100):			#this function may return a null value
+		randomIndex =randint(0, i-1)
+		if word in lines[randomIndex]:
 			break
 	f.close()
-	return (lines[hi])
+	return (lines[randomIndex])
 
 # returns a string generated through the markovify method combine which combines two messages; the latter are generated through the markovify method Text applied to each text file
 def getphrase5():
@@ -120,11 +115,12 @@ def getphrase6():
 	
 	return s
 
-def resp(bot, g):
+def resp(bot, messageCounter):
 	global update_id
-	op=randint(1, RATE) 
+	
+	isReply = randint(1, RATE) 
 		
-	frase=""
+	receivedMessage=""
 	for update in bot.get_updates(offset=update_id, timeout=5):
 		update_id = update.update_id + 1
 
@@ -132,43 +128,43 @@ def resp(bot, g):
 				# Reply to the message
 			
 			
-			frase = update.message.text
-			if frase is not None:
-				if BOTNAME in frase.lower(): 
-					op=1
+			receivedMessage = update.message.text
+
+			if BOTNAME in frase.lower(): 
+				isReply = 1
 				print(update.message.from_user.username)
 			f = open(MAINTEXTFILE, "a")
 			
-			if frase:
+			if receivedMessage:
 
 				f.write("\r")
-				f.write(frase)
+				f.write(receivedMessage)
 
 				f.close()
 				
-			if frase and f!=0 and g>=5: # g is the number of messages the bot will wait before it can reply
-				stat=meme(frase)
-				if stat!="0":
-					update.message.reply_text(stat)
-			if op == 1 and frase and g!=0: # choosing whether to reply or not. "1" is an arbitrary value, however it needs to be <= than RATE
+			if receivedMessage and f!=0 and messageCounter>=5: 
+				status = meme(frase)
+				if status != "0":
+					update.message.reply_text(status)
+			if isReply == 1 and frase and messageCounter!=0: # choosing whether to reply or not. "1" is an arbitrary value, however it needs to be <= than RATE
 				sleep(1.5)
 								
-				gf=randint(1, 6) # choosing which function to call to generate a reply
-				if gf==1:
-					r=getphrase1(frase)
-				elif gf==2:
-					r=getphrase2()
-				elif gf==3:
-					r=getphrase3(frase)
-				elif gf==4:
-					r=getphrase4(update.message.text)
-				elif gf==5:
-					r=getphrase5()
+				selectFun = randint(1, 6) # choosing which function to call to generate a reply
+				if selectFun==1:
+					reply=getphrase1(frase)
+				elif selectFun==2:
+					reply=getphrase2()
+				elif selectFun==3:
+					reply=getphrase3(frase)
+				elif selectFun==4:
+					reply=getphrase4(update.message.text)
+				elif selectFun==5:
+					reply=getphrase5()
 				else:
-					r=getphrase6()				
-				if r!="null":
-					update.message.reply_text(r)
-			op=randint(1, 4)
+					reply=getphrase6()				
+				
+				update.message.reply_text(reply)
+			isReply=randint(1, RATE)
 
 
 def main():
