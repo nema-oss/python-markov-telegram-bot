@@ -3,11 +3,11 @@
 # The functions are completely customizable with little impact on the main
 # This bot requires to be in a folder with a text file named MAINTEXTFILE and one named SECONDARYTEXTFILE else it will create such files. If you don't need a secondary text file, you can remove the function getphrase5() and getphrase6()
 
-BOTNAME = "name" #fill this with the name of the bot so that if someone mentions it will automatically reply
+BOTNAME = "fantuzzo" #fill this with the name of the bot so that if someone mentions it will automatically reply
 RATE = 4 # rate at which the bot replies: 1 reply every 1 / (RATE * receivedMessages)
-MAINTEXTFILE = "main.txt"#name of the main text file
-SECONDARYTEXTFILE = "secondary.txt" #name of the secondary text file; code will never fill this file, you have to do it manually
-TOKEN = 'T0K3N' # pretty self explanatory but remember to put your token here
+MAINTEXTFILE = "scibile.txt"#name of the main text file
+SECONDARYTEXTFILE = "mazza.txt" #name of the secondary text file; code will never fill this file, you have to do it manually
+TOKEN = '831610464:AAHrgDbmksF5_CT0c8Q41sDdrPtIUJV6BTY' # pretty self explanatory but remember to put your token here
 
 from telegram.ext import (MessageHandler, Filters, Updater, CommandHandler)
 import requests
@@ -34,6 +34,7 @@ def meme(frase):
 		return "mortacci tua"
 	return "0"
 
+
 # returns a string generated through the markovify method NewlineText
 def getphrase1(frase):
 
@@ -53,7 +54,7 @@ def getphrase2():
 	numberOfLines=0
 	for x in lines:
 		numberOfLines=numberOfLines+1
-	randomIndex =randint(0, i-1)
+	randomIndex =randint(0, numberOfLines-1)
 	f.close()
 	return (lines[randomIndex])
 
@@ -77,11 +78,11 @@ def getphrase4(mess):
 	word = datamess[index]
 	f = open(MAINTEXTFILE, "r")
 	lines=f.readlines()
-	i=0
+	numberOfLines=0
 	for x in lines:
 		numberOfLines=numberOfLines+1
 	for x in range (0, 100):			#this function may return a null value
-		randomIndex =randint(0, i-1)
+		randomIndex =randint(0, numberOfLines-1)
 		if word in lines[randomIndex]:
 			break
 	f.close()
@@ -130,7 +131,7 @@ def resp(bot, messageCounter):
 			
 			receivedMessage = update.message.text
 
-			if BOTNAME in frase.lower(): 
+			if isinstance(receivedMessage, str) and BOTNAME in receivedMessage.lower(): 
 				isReply = 1
 				print(update.message.from_user.username)
 			f = open(MAINTEXTFILE, "a")
@@ -143,19 +144,19 @@ def resp(bot, messageCounter):
 				f.close()
 				
 			if receivedMessage and f!=0 and messageCounter>=5: 
-				status = meme(frase)
+				status = meme(receivedMessage)
 				if status != "0":
 					update.message.reply_text(status)
-			if isReply == 1 and frase and messageCounter!=0: # choosing whether to reply or not. "1" is an arbitrary value, however it needs to be <= than RATE
+			if isReply == 1 and receivedMessage and messageCounter!=0: # choosing whether to reply or not. "1" is an arbitrary value, however it needs to be <= than RATE
 				sleep(1.5)
 								
 				selectFun = randint(1, 6) # choosing which function to call to generate a reply
 				if selectFun==1:
-					reply=getphrase1(frase)
+					reply=getphrase1(receivedMessage)
 				elif selectFun==2:
 					reply=getphrase2()
 				elif selectFun==3:
-					reply=getphrase3(frase)
+					reply=getphrase3(receivedMessage)
 				elif selectFun==4:
 					reply=getphrase4(update.message.text)
 				elif selectFun==5:
