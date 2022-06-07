@@ -7,8 +7,7 @@ BOTNAME = "fantuzzo" #fill this with the name of the bot so that if someone ment
 RATE = 4 # rate at which the bot replies: 1 reply every 1 / (RATE * receivedMessages)
 MAINTEXTFILE = "scibile.txt"#name of the main text file
 SECONDARYTEXTFILE = "mazza.txt" #name of the secondary text file; code will never fill this file, you have to do it manually
-TOKEN = '831610464:AAHrgDbmksF5_CT0c8Q41sDdrPtIUJV6BTY' # pretty self explanatory but remember to put your token here
-
+TOKEN = ''
 from telegram.ext import (MessageHandler, Filters, Updater, CommandHandler)
 import requests
 import re
