@@ -1,41 +1,52 @@
-# A simple Telegram bot that learns from messages of users it chats with and replies; the messages it sends are generated through functions that use Markov chains, old messages the bot has received (they can be either completely 
-# random or context-related) or a composition of messages that are linked in a semi-random manner from one or more files.
-# The functions are completely customizable with little impact on the main
-# This bot requires to be in a folder with a text file named MAINTEXTFILE and one named SECONDARYTEXTFILE else it will create such files. If you don't need a secondary text file, you can remove the function getphrase5() and getphrase6()
-
-BOTNAME = "fantuzzo" #fill this with the name of the bot so that if someone mentions it will automatically reply
-RATE = 4 # rate at which the bot replies: 1 reply every 1 / (RATE * receivedMessages)
-MAINTEXTFILE = "scibile.txt"#name of the main text file
-SECONDARYTEXTFILE = "mazza.txt" #name of the secondary text file; code will never fill this file, you have to do it manually
-TOKEN = ''
-from telegram.ext import (MessageHandler, Filters, Updater, CommandHandler)
+import logging
+from random import randint
 import requests
 import re
-from random import randint
-import logging
-import telegram
-from telegram.error import NetworkError, Unauthorized
 from time import sleep
 from io import open
 from array import array
 import markovify
+from telegram import __version__ as TG_VER
 
-# checks if the message ends with "cia", "6", "ma" or "mo" and returns an arbitrary string. You can either delete this and its call in resp or delete everything but return "0" 
+MAINTEXTFILE = "scibile.txt"#name of the main text file
+SECONDARYTEXTFILE = "mazza.txt" #name of the secondary text file; code will never fill this file, you have to do it manually
+TOKEN = ''
+
+try:
+    from telegram import __version_info__
+except ImportError:
+    __version_info__ = (0, 0, 0, 0, 0)  # type: ignore[assignment]
+
+if __version_info__ < (20, 0, 0, "alpha", 1):
+    raise RuntimeError(
+        f"This example is not compatible with your current PTB version {TG_VER}. To view the "
+        f"{TG_VER} version of this example, "
+        f"visit https://docs.python-telegram-bot.org/en/v{TG_VER}/examples.html"
+    )
+from telegram import ForceReply, Update
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
+
+# Enable logging
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
 def meme(frase):
-	dim=len(frase)
-	if (frase[dim-1]=='a' and frase [dim-2]=='i' and frase[dim-3]=='c'):
-		return "ciai la faccia da pirla"
-	elif(frase[dim-1]=='6'):
-		return "6 scemo"
-	elif(frase[dim-1]=='a' and frase[dim-2]=='m'):
-		return "ma tu sorella"
-	elif (frase[dim - 1] == 'o' and frase[dim - 2] == 'm'): 
-		return "mortacci tua"
-	return "0"
+    res="0"
+    if frase.endswith("cia"): 
+        res="ciai la faccia da pirla"
+    elif frase.endswith("sei") or frase.endswith("6"):
+        res="6 scemo"
+    elif frase.endswith("ma"):
+        res="ma tu sorella"
+    elif frase.endswith("mo"):
+        res = "mortacci tua"
+    return res
 
 
-# returns a string generated through the markovify method NewlineText
 def getphrase1(frase):
+	
 
 	with open(MAINTEXTFILE) as f:
 		text = f.read()
@@ -46,20 +57,14 @@ def getphrase1(frase):
 		s=text_model.make_sentence(tries=100)
 	return s
 
-# returns a random string in MAINTEXTFILE
 def getphrase2():
 	f = open(MAINTEXTFILE, "r")
 	lines=f.readlines()
-	numberOfLines=0
-	for x in lines:
-		numberOfLines=numberOfLines+1
-	randomIndex =randint(0, numberOfLines-1)
+	hi =randint(0, len(lines)-1)
 	f.close()
-	return (lines[randomIndex])
+	return (lines[hi])
 
-# returns a string generated through the markovify method Text
 def getphrase3(frase):
-
 	with open(MAINTEXTFILE) as f:
 		text = f.read()
 
@@ -68,26 +73,21 @@ def getphrase3(frase):
 	while s == "null":
 		s=text_model.make_sentence(tries=100)
 	return s
-
-# chooses a random word in the message and searches for that word in random messages in the text file until it finds a message containing that word; then returns that message as a string
+	
 def getphrase4(mess):
 	datamess = mess.split()
-	messageLength=len(datamess)
-	index = randint(0, messageLength-1)
-	word = datamess[index]
+	j=len(datamess)
+	index = randint(0, j-1)
+	parola = datamess[index]
 	f = open(MAINTEXTFILE, "r")
 	lines=f.readlines()
-	numberOfLines=0
-	for x in lines:
-		numberOfLines=numberOfLines+1
-	for x in range (0, 100):			#this function may return a null value
-		randomIndex =randint(0, numberOfLines-1)
-		if word in lines[randomIndex]:
+	for x in range (0, 100):
+		hi =randint(0, len(lines)-1)
+		if parola in lines[hi]:
 			break
 	f.close()
-	return (lines[randomIndex])
+	return (lines[hi])
 
-# returns a string generated through the markovify method combine which combines two messages; the latter are generated through the markovify method Text applied to each text file
 def getphrase5():
 	with open(MAINTEXTFILE) as f:
 		texta = f.read()
@@ -101,7 +101,6 @@ def getphrase5():
 	
 	return s
 
-# same as getphrase5() but the NewlineText method is applied instead
 def getphrase6():
 	with open(MAINTEXTFILE) as f:
 		texta = f.read()
@@ -114,84 +113,61 @@ def getphrase6():
 	s = model_combo.make_sentence()
 	
 	return s
-
-def resp(bot, messageCounter):
-	global update_id
 	
-	isReply = randint(1, RATE) 
-		
-	receivedMessage=""
-	for update in bot.get_updates(offset=update_id, timeout=5):
-		update_id = update.update_id + 1
 
-		if update.message:  # your bot can receive updates without messages
-				# Reply to the message
-			
-			
-			receivedMessage = update.message.text
 
-			if isinstance(receivedMessage, str):
-				print(update.message.from_user.username)
-				if BOTNAME in receivedMessage.lower(): 
-					isReply = 1
-			f = open(MAINTEXTFILE, "a")
-			
-			if receivedMessage:
-
-				f.write("\r")
-				f.write(receivedMessage)
-
-				f.close()
-				
-			if receivedMessage and f!=0 and messageCounter>=5: 
-				status = meme(receivedMessage)
-				if status != "0":
-					update.message.reply_text(status)
-			if isReply == 1 and receivedMessage and messageCounter!=0: # choosing whether to reply or not. "1" is an arbitrary value, however it needs to be <= than RATE
-				sleep(1.5)
+async def resp(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    op=randint(1, 8)	
+    
+    if update.message.text:	
+        frase=update.message.text	
+        if "fantuzzo" in frase or "Fantuzzo" in frase:
+            op=1
+        f = open(MAINTEXTFILE, "a")
+        f.write("\r")
+        f.write(frase)
+        f.close()
+        if op == 1:
+            sleep(1.5)
 								
-				selectFun = randint(1, 6) # choosing which function to call to generate a reply
-				if selectFun==1:
-					reply=getphrase1(receivedMessage)
-				elif selectFun==2:
-					reply=getphrase2()
-				elif selectFun==3:
-					reply=getphrase3(receivedMessage)
-				elif selectFun==4:
-					reply=getphrase4(update.message.text)
-				elif selectFun==5:
-					reply=getphrase5()
-				else:
-					reply=getphrase6()				
-				
-				update.message.reply_text(reply)
-			isReply=randint(1, RATE)
+            gf=randint(1, 6)
+            is_meme = meme(frase)
+            if is_meme!="0":
+                r = is_meme
+            elif gf==1:
+                r=getphrase1(frase)
+            elif gf==2:
+                r=getphrase2()
+            elif gf==3:
+                r=getphrase3(frase)
+            elif gf==4:
+                r=getphrase4(update.message.text)
+            elif gf==5:
+                r=getphrase5()
+            else:   
+                r=getphrase6()				
+            if r!="null" and r!="None":
+                #await update.message.reply_text(r)
+                await context.bot.send_message(update.effective_chat.id, r)
+            op=randint(1, 8)
 
 
-def main():
-	global update_id
-	# Telegram Bot Authorization Token
-	bot = telegram.Bot(TOKEN)
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    
+    await update.message.reply_text(update.message.text)
 
-	# get the first pending update_id, this is so we can skip over it in case
-	# we get an "Unauthorized" exception.
-	try:
-		update_id = bot.get_updates()[0].update_id
-	except IndexError:
-		update_id = None
 
-	logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-	i=0
-	while True:
-		try:
+def main() -> None:
+    """Start the bot."""
+    # Create the Application and pass it your bot's token.
+    application = Application.builder().token(TOKEN).build()
 
-			resp(bot, i)
-			i=i+1
-		except NetworkError:
-			sleep(1)
-		except Unauthorized:
-			#The user has removed or blocked the bot.
-			update_id += 1
+    # on non command i.e message - echo the message on Telegram
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, resp))
 
-if __name__ == '__main__':
+    # Run the bot until the user presses Ctrl-C
+    application.run_polling()
+
+
+if __name__ == "__main__":
     main()
